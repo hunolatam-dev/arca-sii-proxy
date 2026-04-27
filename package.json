@@ -1,0 +1,6 @@
+{
+  "name": "huno-arca-simpleapi-proxy",
+  "version": "1.0.0",
+  "description": "Proxy Netlify para SimpleAPI SII — HUNO® Arca",
+  "engines": { "node": ">=18" }
+}
