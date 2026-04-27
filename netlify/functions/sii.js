@@ -84,6 +84,35 @@ exports.handler = async (event) => {
   try {
 
     // ══════════════════════════════════════════════════════════════════════════
+    // ROOT — GET / (diagnóstico)
+    // ══════════════════════════════════════════════════════════════════════════
+    if (route === "/" || route === "") {
+      return ok({
+        status:    "online",
+        version:   "2.0",
+        proxy:     "HUNO® Arca — SimpleAPI Proxy",
+        base:      BASE,
+        rutCert:   RUT_CERT,
+        routes: [
+          "GET  /api/sii/rut/{rut}",
+          "GET  /api/sii/auth/token",
+          "GET  /api/sii/rcv/ventas/{rut}/{periodo}",
+          "GET  /api/sii/rcv/compras/{rut}/{periodo}",
+          "GET  /api/sii/folios/{rut}/{tipoDte}",
+          "POST /api/sii/folios/solicitar",
+          "POST /api/sii/dte/generar",
+          "POST /api/sii/dte/consultar",
+          "POST /api/sii/envio/generar",
+          "POST /api/sii/envio/enviar",
+          "POST /api/sii/dte/pdf",
+          "POST /api/sii/bhe/emitir",
+          "POST /api/sii/bhe/anular",
+          "POST /api/sii/mapas/geocodificar",
+        ],
+      });
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
     // AUTH — GET /auth/token
     // Devuelve token Bearer válido 24h para autenticarse en SII
     // ══════════════════════════════════════════════════════════════════════════
@@ -185,18 +214,28 @@ exports.handler = async (event) => {
     // Body: { rut, tipo, cantidad, clave }
     // ══════════════════════════════════════════════════════════════════════════
     if (route === "/folios/solicitar") {
-      // El certificado del representante legal (Bastian 18711008-4) ya está
-      // embebido en el proxy. Solo necesitamos el RUT de la empresa y el tipo DTE.
-      // La clave del PFX (0201) es la credencial — no se necesita clave SII externa.
       const { rut, tipo, cantidad = 100 } = body || {};
       if (!rut || !tipo) return e(400, "rut y tipo son requeridos");
-      const { status, data } = await siJson("/folios/solicitar", "POST", {
-        RutEmpresa:  cleanRut(rut),
-        Tipo:        Number(tipo),
-        Cantidad:    cantidad,
+
+      // SimpleAPI Folios usa multipart/form-data con el PFX adjunto
+      // El endpoint es /api/v1/folios/solicitar (POST, multipart)
+      const fd = new FormData();
+      fd.append("input", JSON.stringify({
+        RutEmpresa: cleanRut(rut),
+        Tipo:       Number(tipo),
+        Cantidad:   cantidad,
         Certificado: { Rut: RUT_CERT, Password: PFX_PASS },
+      }));
+      fd.append("files", pfxBlob(), "Certificado.pfx");
+
+      const res  = await fetch(`${BASE}/folios/solicitar`, {
+        method:  "POST",
+        headers: { Authorization: API_KEY },
+        body:    fd,
       });
-      return j(status, data);
+      const text = await res.text();
+      let data; try { data = JSON.parse(text); } catch { data = { raw: text }; }
+      return j(res.status, data);
     }
 
     // ══════════════════════════════════════════════════════════════════════════
