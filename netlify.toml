@@ -2,13 +2,15 @@
   functions = "netlify/functions"
   publish   = "public"
 
+# Redirect /api/sii/* to the function (sin :splat — la función lee event.rawUrl)
 [[redirects]]
   from   = "/api/sii/*"
-  to     = "/.netlify/functions/sii/:splat"
+  to     = "/.netlify/functions/sii"
   status = 200
+  force  = true
 
 [[headers]]
-  for = "/.netlify/functions/*"
+  for = "/*"
   [headers.values]
     Access-Control-Allow-Origin  = "*"
     Access-Control-Allow-Methods = "GET, POST, OPTIONS"
