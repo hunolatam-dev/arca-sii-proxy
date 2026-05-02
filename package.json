@@ -1,0 +1,6 @@
+{
+  "name": "arca-sii-proxy",
+  "version": "4.0.0",
+  "description": "HUNO® Arca — Proxy SimpleAPI para SII Chile",
+  "private": true
+}
